@@ -179,13 +179,28 @@ async function rate(grade: 'again' | 'hard' | 'good'): Promise<void> {
 function restart(): void {
   currentIndex.value = 0
   isFlipped.value = false
+  sessionStorage.removeItem(`flashcard_progress_${bookId.value}`)
   loadWords()
 }
 
 async function loadWords(): Promise<void> {
   const newWords = await getNewWords(bookId.value, settings.value.dailyNewWords)
   words.value = newWords
+  
+  // 恢复上次学习进度
+  const savedIndex = sessionStorage.getItem(`flashcard_progress_${bookId.value}`)
+  if (savedIndex) {
+    const idx = parseInt(savedIndex, 10)
+    if (idx >= 0 && idx < newWords.length) {
+      currentIndex.value = idx
+    }
+  }
 }
+
+// 监听进度变化，自动保存
+watch(currentIndex, (val) => {
+  sessionStorage.setItem(`flashcard_progress_${bookId.value}`, String(val))
+})
 
 // 监听卡片变化，自动发音
 watch(currentIndex, async () => {
